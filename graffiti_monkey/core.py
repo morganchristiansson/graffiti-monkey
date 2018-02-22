@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import copy
 
 from exceptions import *
 
@@ -196,16 +197,12 @@ class GraffitiMonkey(object):
 
         tags_to_set = {}
         if self._append:
-            tags_to_set = volume.tags
+            tags_to_set = copy.deepcopy(volume.tags)
         for tag_name in self._instance_tags_to_propagate:
             log.debug('Trying to propagate instance tag: %s', tag_name)
             if tag_name in instance_tags:
                 value = instance_tags[tag_name]
                 tags_to_set[tag_name] = value
-
-        # Additional tags
-        tags_to_set['instance_id'] = instance_id
-        tags_to_set['device'] = device
 
         # Set default tags for volume
         for tag in self._volume_tags_to_be_set:
@@ -297,7 +294,7 @@ class GraffitiMonkey(object):
 
         tags_to_set = {}
         if self._append:
-            tags_to_set = snapshot.tags
+            tags_to_set = copy.deepcopy(snapshot.tags)
         for tag_name in self._volume_tags_to_propagate:
             log.debug('Trying to propagate volume tag: %s', tag_name)
             if tag_name in volume_tags:
