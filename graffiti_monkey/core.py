@@ -101,7 +101,7 @@ class GraffitiMonkey(object):
         ''' Gets a list of volumes, and then loops through them tagging
         them '''
 
-        storage_counter = 0
+        tagged_counter = 0
         volumes   = []
         instances = {}
 
@@ -155,7 +155,6 @@ class GraffitiMonkey(object):
         this_vol = 0
         for volume in volumes:
             this_vol += 1
-            storage_counter += volume.size
             log.info ('Processing volume %d of %d total volumes', this_vol, total_vols)
 
             if volume.status != 'in-use':
@@ -164,7 +163,8 @@ class GraffitiMonkey(object):
 
             for attempt in range(5):
                 try:
-                    self.tag_volume(volume, instances)
+                    if self.tag_volume(volume, instances):
+                        tagged_counter += 1
                 except boto.exception.EC2ResponseError, e:
                     log.error("Encountered Error %s on volume %s", e.error_code, volume.id)
                     break
@@ -177,7 +177,7 @@ class GraffitiMonkey(object):
                 log.error("Encountered Error %s on volume %s, %d retries failed, continuing", e.error_code, volume.id, attempt)
                 continue
 
-        log.info('Processed a total of {0} GB of AWS Volumes'.format(storage_counter))
+        log.info('Tagged %d of %d volumes', tagged_counter, total_vols)
         log.info('Completed processing all volumes')
 
         return volumes
@@ -212,15 +212,14 @@ class GraffitiMonkey(object):
         if self._dryrun:
             log.info('DRYRUN: Volume: %s', volume.id)
 
-        self._set_resource_tags(volume, tags_to_set)
-
-        return True
+        return self._set_resource_tags(volume, tags_to_set)
 
 
     def tag_snapshots(self, volumes):
         ''' Gets a list of snapshots, and then loops through them tagging
         them '''
 
+        tagged_counter = 0
         snapshots = []
         if self._snapshots_to_tag:
             log.info('Using snapshot list from cli/config file')
@@ -268,7 +267,8 @@ class GraffitiMonkey(object):
             log.info ('Processing snapshot %d of %d total snapshots', this_snap, total_snaps)
             for attempt in range(5):
                 try:
-                    self.tag_snapshot(snapshot, volumes)
+                    if self.tag_snapshot(snapshot, volumes):
+                        tagged_counter += 1
                 except boto.exception.EC2ResponseError, e:
                     log.error("Encountered Error %s on snapshot %s", e.error_code, snapshot.id)
                     break
@@ -280,6 +280,8 @@ class GraffitiMonkey(object):
             else:
                 log.error("Encountered Error %s on snapshot %s, %d retries failed, continuing", e.error_code, snapshot.id, attempt)
                 continue
+
+        log.info('Tagged %d of %d snapshots', tagged_counter, total_snaps)
         log.info('Completed processing all snapshots')
 
     def tag_snapshot(self, snapshot, volumes):
@@ -309,9 +311,7 @@ class GraffitiMonkey(object):
         if self._dryrun:
             log.info('DRYRUN: Snapshot: %s', snapshot.id)
 
-        self._set_resource_tags(snapshot, tags_to_set)
-
-        return True
+        return self._set_resource_tags(snapshot, tags_to_set)
 
 
     def _set_resource_tags(self, resource, tags):
@@ -333,7 +333,7 @@ class GraffitiMonkey(object):
             log.info('DRYRUN: Tags delta: %s', delta_tags)
 
         if len(delta_tags) == 0:
-            return
+            return False
 
         if self._dryrun:
             log.info('DRYRUN: Tagging required')
@@ -341,6 +341,7 @@ class GraffitiMonkey(object):
             log.info('Tagging %s with %s', resource.id, delta_tags)
             resource.add_tags(delta_tags)
 
+        return True
 
 
 class Logging(object):
