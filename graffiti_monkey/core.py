@@ -210,9 +210,10 @@ class GraffitiMonkey(object):
             tags_to_set[tag['key']] = tag['value']
 
         if self._dryrun:
-            log.info('DRYRUN: Volume %s would have been tagged %s', volume.id, tags_to_set)
-        else:
-            self._set_resource_tags(volume, tags_to_set)
+            log.info('DRYRUN: Volume: %s', volume.id)
+
+        self._set_resource_tags(volume, tags_to_set)
+
         return True
 
 
@@ -306,9 +307,10 @@ class GraffitiMonkey(object):
             tags_to_set[tag['key']] = tag['value']
 
         if self._dryrun:
-            log.info('DRYRUN: Snapshot %s would have been tagged %s', snapshot.id, tags_to_set)
-        else:
-            self._set_resource_tags(snapshot, tags_to_set)
+            log.info('DRYRUN: Snapshot: %s', snapshot.id)
+
+        self._set_resource_tags(snapshot, tags_to_set)
+
         return True
 
 
@@ -325,11 +327,19 @@ class GraffitiMonkey(object):
             if not tag_key in resource.tags or resource.tags[tag_key] != tag_value:
                 delta_tags[tag_key] = tag_value
 
+        if self._dryrun:
+            log.info('DRYRUN: Tags before: %s', resource.tags)
+            log.info('DRYRUN: Tags after: %s', tags)
+            log.info('DRYRUN: Tags delta: %s', delta_tags)
+
         if len(delta_tags) == 0:
             return
 
-        log.info('Tagging %s with [%s]', resource.id, delta_tags)
-        resource.add_tags(delta_tags)
+        if self._dryrun:
+            log.info('DRYRUN: Tagging required')
+        else:
+            log.info('Tagging %s with %s', resource.id, delta_tags)
+            resource.add_tags(delta_tags)
 
 
 
