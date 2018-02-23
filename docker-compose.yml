@@ -7,13 +7,12 @@ services:
       - graffiti-monkey
       - --config=/etc/graffiti-monkey/config.yml
       - --append
-      - --nosnapshots
       - --dryrun
       - -vvv
     environment:
       AWS_REGION: us-east-1
     volumes:
-      - ./confg/example_config.yml:/etc/graffiti-monkey/config.yml
+      - ./conf/example_config.yml:/etc/graffiti-monkey/config.yml
     networks:
       - local
 
