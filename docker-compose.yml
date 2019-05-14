@@ -1,8 +1,13 @@
 ---
-version: '2.1'
+version: '3.4'
 services:
   gm:
-    build: .
+    image: ${IMAGE_NAME}
+    build:
+      context: .
+      args:
+        GRAFFITI_MONKEY_VERSION: "${SOURCE_BRANCH}"
+
     command:
       - graffiti-monkey
       - --config=/etc/graffiti-monkey/config.yml
@@ -15,6 +20,17 @@ services:
       - ./conf/example_config.yml:/etc/graffiti-monkey/config.yml
     networks:
       - local
+
+  builder:
+    image: ${IMAGE_NAME}:builder
+    build:
+      context: .
+      target: builder
+    command:
+      - python
+      - setup.py
+      - test
+
 
 networks:
   local:
